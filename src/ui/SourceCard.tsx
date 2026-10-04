@@ -1,5 +1,5 @@
 import { Alert, Button, Chip, Paper, Stack, TextField, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { parseSource, type SourceKind } from '../ext/source';
 import type { BookState } from './useBook';
 
@@ -23,9 +23,13 @@ export function SourceCard(props: {
   const [editing, setEditing] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
 
+  // 前回の PID は初回だけ入力欄に入れる（空にした入力を元に戻さない）
+  const prefilled = useRef(false);
   useEffect(() => {
-    if (input === '' && lastPid) setInput(lastPid);
-  }, [lastPid, input]);
+    if (prefilled.current || !lastPid) return;
+    prefilled.current = true;
+    setInput((cur) => (cur === '' ? lastPid : cur));
+  }, [lastPid]);
 
   const submit = () => {
     const src = parseSource(input);

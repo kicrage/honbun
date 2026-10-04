@@ -107,17 +107,19 @@ function formatBlockLines(
   content: Settings['content'],
   dims: { width: number; height: number },
 ): FormattedBlock[] {
-  const runs: { kind: BlockKind; texts: string[]; src: Line[] }[] = [];
+  const runs: { kind: BlockKind; texts: string[]; src: Line[]; gaiji: number }[] = [];
   for (const line of lines) {
     const kind = KIND_OF_TYPE[line.type];
     if (!kind || !includeKind(kind, content.types)) continue;
     const text = cleanLine(line.text, content);
     if (text === '') continue;
+    const gaiji = line.text.split('〓').length - 1;
     const last = runs[runs.length - 1];
     if (last && last.kind === kind) {
       last.texts.push(text);
       last.src.push(line);
-    } else runs.push({ kind, texts: [text], src: [line] });
+      last.gaiji += gaiji;
+    } else runs.push({ kind, texts: [text], src: [line], gaiji });
   }
   return runs.map((r) => {
     // 縦書きの行は頁の高さ、横書きの行は頁の幅を基準に「長い/短い」を判断する
@@ -127,6 +129,7 @@ function formatBlockLines(
       kind: r.kind,
       lines: r.texts,
       cont: continuationFlags(r.src, r.texts, vertical ? dims.height : dims.width),
+      gaiji: r.gaiji,
     };
   });
 }
@@ -142,9 +145,9 @@ export interface FormatContext {
 }
 
 /** 数字だけの1行で、目次から算出したこの見開きの印刷頁と一致するブロック（レイアウトが本文・タイトル本文として持つノンブル）。 */
-function isPageNumberBlock(b: FormattedBlock, pn: { earlier: number | null; later: number | null }): boolean {
+export function isPageNumberBlock(b: FormattedBlock, pn: { earlier: number | null; later: number | null }): boolean {
   if ((b.kind !== 'body' && b.kind !== 'title') || b.lines.length !== 1) return false;
-  const n = parseNumeral(b.lines[0].replace(/s+/g, ''));
+  const n = parseNumeral(b.lines[0].replace(/\s+/g, ''));
   return n !== null && (n === pn.earlier || n === pn.later);
 }
 
@@ -170,7 +173,9 @@ export function formatKoma(ctx: FormatContext, koma: number, layout: PageLayout,
 
   const sections: PageSection[] = [];
   for (const page of pages) {
-    let blocks = page.blocks.flatMap((b) => formatBlockLines(b.lines, settings.content, layout));
+    // 分割した頁の寸法（横書きの行の長さを、見開き全体の幅ではなく1頁の幅と比べる）
+    const pageDims = page.side === 'whole' ? layout : { width: layout.width / 2, height: layout.height };
+    let blocks = page.blocks.flatMap((b) => formatBlockLines(b.lines, settings.content, pageDims));
     if (settings.content.dropPageNumbers) blocks = blocks.filter((b) => !isPageNumberBlock(b, pn));
     if (blocks.length === 0 && settings.content.emptyPages === 'skip') continue;
 

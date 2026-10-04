@@ -14,6 +14,7 @@ type RunState =
   | { status: 'idle' }
   | { status: 'running'; done: number; total: number }
   | { status: 'done'; stats: JobStats; path: string; bytes: number }
+  | { status: 'cancelled' }
   | { status: 'error'; message: string };
 
 export function App({ mode }: { mode: 'popup' | 'sidepanel' }) {
@@ -92,7 +93,11 @@ export function App({ mode }: { mode: 'popup' | 'sidepanel' }) {
         return;
       }
       const file = buildOutput(pages, settings, { book, from: range.from, to: range.to });
-      await saveFile(file, settings.output.saveAs);
+      const saved = await saveFile(file, settings.output.saveAs);
+      if (!saved) {
+        setRun({ status: 'cancelled' });
+        return;
+      }
       setRun({ status: 'done', stats, path: file.path, bytes: file.data.length });
     } catch (e) {
       if (ac.signal.aborted) setRun({ status: 'idle' });
@@ -165,6 +170,11 @@ export function App({ mode }: { mode: 'popup' | 'sidepanel' }) {
                   {run.stats.glyphMismatch > 0 && <> 字体をそろえられなかったコマ: {run.stats.glyphMismatch}（補った文字は新字体のままです）。</>}
                   {run.stats.gaijiCount > 0 && <> 外字「〓」: {run.stats.gaijiCount}字。</>}
                   {run.stats.divideFallback > 0 && <> 綴じ位置を取得できず中央で代用: {run.stats.divideFallback}コマ。</>}
+                </Alert>
+              )}
+              {run.status === 'cancelled' && (
+                <Alert severity="info" sx={{ py: 0 }}>
+                  保存をキャンセルしました。
                 </Alert>
               )}
               {run.status === 'error' && (

@@ -42,8 +42,8 @@ export function foldText(s: string): string {
 export function headingKey(e: IndexEntry): string | null {
   const t = e.title
     .replace(/^[（(][^）)]*[）)]\s*/, '') // （一）
-    .replace(/^[一二三四五六七八九〇十百]+\s+/, '') // 一
-    .replace(/^第[一二三四五六七八九〇十百]+[章節編部]\s*/, ''); // 第一章
+    .replace(/^[一二三四五六七八九〇十百0-9０-９]+[.．、]?\s+/, '') // 一 / 1 / 1.
+    .replace(/^第[一二三四五六七八九〇十百0-9０-９]+[章節編部]\s*/, ''); // 第一章 / 第1章
   const key = foldText(t);
   return key.length >= 2 ? key : null;
 }

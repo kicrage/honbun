@@ -79,6 +79,8 @@ export interface FormattedBlock {
   lines: string[];
   /** cont[i] = lines[i] が次の行へ流れ続ける（行連結モードで同じ段落にする）。省略時は全行が連続。 */
   cont?: boolean[];
+  /** 整形前の外字「〓」の数（置換・除去の設定でも集計できるよう、整形の前に数える） */
+  gaiji?: number;
 }
 
 /** 形式(TXT/MD)非依存の中間表現。1頁 = 1要素。 */

@@ -26,9 +26,10 @@ export function sanitizeSegment(name: string): string {
     // eslint-disable-next-line no-control-regex
     .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_')
     .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/[. ]+$/, '');
+    .trim();
+  // 切り詰めの後に末尾の . と空白を除く（Windows では末尾にあるとファイル名にできない）
   if (s.length > 120) s = s.slice(0, 120);
+  s = s.replace(/[. ]+$/, '');
   if (s === '' || s === '.' || s === '..') s = '_';
   if (RESERVED.test(s.split('.')[0])) s = `_${s}`;
   return s;

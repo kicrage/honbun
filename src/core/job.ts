@@ -99,7 +99,7 @@ export async function processKoma(
 
   const pages = formatKoma(ctx, koma, layout, analyze?.divide ?? 0.5);
   let gaiji = 0;
-  for (const p of pages) for (const b of p.blocks) for (const l of b.lines) gaiji += l.split('〓').length - 1;
+  for (const p of pages) for (const b of p.blocks) gaiji += b.gaiji ?? 0;
 
   return { pages, gaiji, divideFallback: needDivide && analyze?.divide == null, recoveredChars, glyphMismatch };
 }

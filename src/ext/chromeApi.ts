@@ -82,12 +82,15 @@ function toDataUrl(file: OutputFile): string {
   return `data:${file.mime};base64,${btoa(bin)}`;
 }
 
+/** downloads.download の「ユーザーによるキャンセル」（Chrome: "Download canceled by the user"）か。 */
+export const isUserCanceled = (e: unknown): boolean => /cancel/i.test(e instanceof Error ? e.message : String(e));
+
 /**
- * 出力ファイルを保存する。
+ * 出力ファイルを保存する。保存できれば true、ユーザーがキャンセルしたら false。
  * ポップアップで「名前を付けて保存」ダイアログを開くとポップアップが閉じ、blob URL が失効して
  * ダウンロードが失敗しうるため、その場合は自己完結した data URL を使う。
  */
-export async function saveFile(file: OutputFile, saveAs: boolean): Promise<void> {
+export async function saveFile(file: OutputFile, saveAs: boolean): Promise<boolean> {
   const blob = new Blob([file.data as BlobPart], { type: file.mime });
 
   if (inExtension && chrome.downloads?.download) {
@@ -95,10 +98,14 @@ export async function saveFile(file: OutputFile, saveAs: boolean): Promise<void>
     const url = useData ? toDataUrl(file) : URL.createObjectURL(blob);
     try {
       await chrome.downloads.download({ url, filename: file.path, saveAs, conflictAction: 'uniquify' });
+    } catch (e) {
+      // 「名前を付けて保存」でユーザーがキャンセルしたときはエラーにしない
+      if (isUserCanceled(e)) return false;
+      throw e;
     } finally {
       if (!useData) setTimeout(() => URL.revokeObjectURL(url), 60_000);
     }
-    return;
+    return true;
   }
 
   // 拡張外（開発時）: a[download] で保存
@@ -110,6 +117,7 @@ export async function saveFile(file: OutputFile, saveAs: boolean): Promise<void>
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  return true;
 }
 
 // ---- サイドパネル ----------------------------------------------------------
