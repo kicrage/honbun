@@ -1,6 +1,6 @@
 {
   "name": "honbun",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "description": "次世代デジタルライブラリー（テキストモード）の全文テキストを書籍単位で取得する Chrome 拡張",

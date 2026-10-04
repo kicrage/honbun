@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Honbun",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "次世代デジタルライブラリー（テキストモード）の全文を、範囲・書式を指定してテキスト/Markdownで保存します。",
   "minimum_chrome_version": "116",
   "action": {
